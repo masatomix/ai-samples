@@ -2,5 +2,5 @@
 #scipy
 #sklearn
 #python-crfsuite
-#mecab-python3
+mecab-python3
 requests
