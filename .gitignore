@@ -4,9 +4,7 @@ __pycache__/
 *$py.class
 
 # C extensions
-*.so
-
-# Distribution / packaging
+*.so # Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -102,3 +100,31 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Created by https://www.gitignore.io/api/vagrant
+
+### Vagrant ###
+# General
+.vagrant/
+
+# Log files (if you are creating logs in debug mode, uncomment this)
+# *.logs
+
+
+# End of https://www.gitignore.io/api/vagrant
+
+
+.idea/
+**/config/config.ini
+
+urllib3-1.23.dist-info
+urllib3
+requests-2.19.1.dist-info
+requests
+idna-2.7.dist-info
+idna
+chardet-3.0.4.dist-info
+chardet
+certifi-2018.4.16.dist-info
+certifi
+

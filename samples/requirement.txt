@@ -1,0 +1,6 @@
+#numpy
+#scipy
+#sklearn
+#python-crfsuite
+#mecab-python3
+requests
