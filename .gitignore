@@ -116,6 +116,7 @@ venv.bak/
 
 .idea/
 **/config/config.ini
+**/*.so
 
 urllib3-1.23.dist-info
 urllib3
