@@ -50,11 +50,16 @@ def main(args):
     morph_index = 0
     entity_index = 0
 
+    match_index = 0
+
     # 形態素単位で、Gooラボからとってきた固有表現と突合し、IOBラベルをつけていく。
     while len(morphs) > morph_index:
 
         buf = buf + morphs[morph_index][0]
-        target = entities[entity_index][0]
+        # 固有表現が、0件だった場合の考慮。
+        target = ""
+        if len(entities) > 0:
+            target = entities[entity_index][0]
 
         messageBuf = "[{0}] 対 [{1}]:".format(buf, target)
 
@@ -80,6 +85,7 @@ def main(args):
             # 部分一致した場合は、初めだけB_
             if buf == morphs[morph_index][0]:
                 morphs[morph_index].append("B_" + entities[entity_index][1])
+                match_index = morph_index  # ココから部分一致が始まる
             # それ以外の部分一致は、I_
             else:
                 morphs[morph_index].append("I_" + entities[entity_index][1])
@@ -89,17 +95,37 @@ def main(args):
 
         # 部分一致しない場合は、entity_index番号を進める
         else:
-            buf = ""
-            # ただし、次がない場合は、morph側を進める
-            if len(entities) == entity_index + 1:
+            # ただしentity側が、次がない場合は、morph側を進める
+            if len(entities) == entity_index + 1 or len(entities) == 0:
                 morphs[morph_index].append("O")
                 entity_index = 0
                 morph_index = morph_index + 1
+                buf = ""
                 logger.debug(messageBuf + "部分一致しない。つぎのentityもないので、bufをリセット。つぎのmorphへ。")
                 logger.debug('----')
-            else:
+            elif buf == morphs[morph_index][0]:
                 logger.debug(messageBuf + "部分一致しない。bufをリセットし、次のentity_indexへ")
                 entity_index = entity_index + 1
+                buf = ""
+
+                # 下記の場合は、bufに追加中に部分一致しなくなったと言うこと
+            else:
+                logger.debug(messageBuf + "さっきまで部分一致してたのに、しなくなった。bufをリセットし、"
+                                          "次のentity_indexへいくが、部分一致したところまで戻ってやりなおす。")
+
+                # 間違って追加したIOBタグの除去。範囲は、部分一致が始まったところから、今の番号まで。
+                for count in range(match_index, morph_index):
+                    morphs[count].pop(-1)
+
+                entity_index = entity_index + 1
+                buf = ""
+                morph_index = match_index
+
+    logger.debug("\n固有表現抽出結果:")
+    for entity in entities:
+        logger.debug(entity)
+
+    logger.debug("")
 
     logger.info("\nIOBタグ付けした結果データ:")
     for morph in morphs:
