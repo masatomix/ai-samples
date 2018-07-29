@@ -6,6 +6,8 @@ import requests
 import json
 from MecabFacade import MecabFacade
 import configparser
+import hashlib
+import os
 
 from logging import getLogger, StreamHandler, Formatter, DEBUG, INFO
 
@@ -21,7 +23,6 @@ logger.propagate = False
 
 
 class IREXTeachDataCreator(object):
-
     def __init__(self, options='-Ochasen -d /usr/lib/mecab/dic/mecab-ipadic-neologd'):
         self.__mecab_facade = MecabFacade(options)
         self.__config = configparser.ConfigParser()
@@ -75,12 +76,12 @@ class IREXTeachDataCreator(object):
 
             # 完全一致した場合は、次の morphにすすめる
             if target == buf:
-                # 単純に、完全一致した場合は、B/Iをつけず。
+                # 単純に、完全一致した場合は、Bをつける。
                 if buf == morphs[morph_index][0]:
-                    morphs[morph_index].append(entities[entity_index][1])
+                    morphs[morph_index].append("B-" + entities[entity_index][1])
                 # 完全一致だけど、前回から積み上げで完全一致した場合は、I_となる
                 else:
-                    morphs[morph_index].append("I_" + entities[entity_index][1])
+                    morphs[morph_index].append("I-" + entities[entity_index][1])
                 # add
                 buf = ""
                 entity_index = 0
@@ -94,11 +95,11 @@ class IREXTeachDataCreator(object):
             elif target.startswith(buf):  # morph文字が、entity文字に部分一致したら、
                 # 部分一致した場合は、初めだけB_
                 if buf == morphs[morph_index][0]:
-                    morphs[morph_index].append("B_" + entities[entity_index][1])
+                    morphs[morph_index].append("B-" + entities[entity_index][1])
                     match_index = morph_index  # ココから部分一致が始まる
                 # それ以外の部分一致は、I_
                 else:
-                    morphs[morph_index].append("I_" + entities[entity_index][1])
+                    morphs[morph_index].append("I-" + entities[entity_index][1])
                 morph_index = morph_index + 1
                 logger.debug(messageBuf + "部分一致した。bufにappend。完全一致するまでつづける。つぎのmorphへ。")
                 continue
@@ -133,9 +134,14 @@ class IREXTeachDataCreator(object):
 
         return morphs
 
-    def saveIOB(self,path):
-        pass
+    def save_teach_data(self, morphs, dir):
 
+        os.makedirs(dir, exist_ok=True)
+        path = os.path.join(dir, hashlib.md5(repr(morphs).encode('utf-8')).hexdigest() + ".txt")
+        morphsStr = ['\t'.join(s) for s in morphs]
+
+        with open(path, mode='w') as f:
+            f.write('\n'.join(morphsStr))
 
     def get_proxy(self):
         verify = True
