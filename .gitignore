@@ -118,6 +118,8 @@ venv.bak/
 **/config/config.ini
 **/*.so
 
+samples/result/*.txt
+
 urllib3-1.23.dist-info
 urllib3
 requests-2.19.1.dist-info
