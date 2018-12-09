@@ -60,6 +60,11 @@ Vagrant.configure("2") do |config|
   #   vb.memory = "1024"
   # end
   #
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected", "--memory", 4096 ]
+  end
+
   # View the documentation for the provider you are using for more
   # information on available options.
 
@@ -70,5 +75,9 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
-  config.vm.provision :shell, :path => "./script/provision.sh",:privileged => true
+  config.vm.provision :shell, :path => "./script/provision_init.sh",:privileged => false
+  config.vm.provision :shell, :path => "./script/provision_ja.sh",:privileged => false
+  config.vm.provision :shell, :path => "./script/provision_python.sh",:privileged => false
+  config.vm.provision :shell, :path => "./script/provision_mecab.sh",:privileged => false
+  config.vm.provision :shell, :path => "./script/provision_python_nlp.sh",:privileged => false
 end

@@ -3,58 +3,34 @@
 
 
 import sys
-import requests
-import json
-from MecabFacade import MecabFacade
 import configparser
-import codecs
-from IREXTeachDataCreator import IREXTeachDataCreator
+from nlp import IREXTeachDataCreator
+from nlp import TextReader
 import itertools
 
-from logging import getLogger, StreamHandler, Formatter, DEBUG, INFO
+from logging import getLogger
+import logging.config
 
-logger = getLogger(__name__)
-handler = StreamHandler()
-handler_format = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(handler_format)
-
-handler.setLevel(DEBUG)
-logger.setLevel(DEBUG)
-logger.addHandler(handler)
-logger.propagate = False
+logger = getLogger()
 
 config = configparser.ConfigParser()
 config.read("./config/config.ini")
 
 
 def main(args):
-    sent = []
-    sents = []
-    strings = get_training_texts()
-    for line in strings:
-        if line == '':
-            sents.append(sent)
-            sent = []
-            continue
-        morph_info = line.strip().split('\t')
-        sent.append(morph_info)
+    """
+    ネットにアップされた教師データ(IOBデータ)を取得(1)し、形態素データ部の文章部分を抽出して文章を復元。
+    IREXTeachDataCreator をつかって
+      その文章部から形態素データを自分で作成、またその形態素データ毎にIOBデータを付与(2)
+    (1)と(2)はほぼ同じになると考えられ、それらを比較。同じであれば(2)の作成に使用したGooラボのデータで
+    教師データを作成できるって事になる。だからそのテスト。
+    最終的にresultディレクトリに教師データを出力します。
+    """
+    logging.config.fileConfig('config/logging.conf')
 
-    train_num = int(len(sents))
-    train_sents = sents[:train_num]  # 一文、一文が配列になってる
-
-    # with codecs.open('teach_data.txt', encoding='utf-8') as f:
-    #     sent = []
-    #     sents = []
-    #     for line in f:
-    #         if line == '\n':
-    #             sents.append(sent)
-    #             sent = []
-    #             continue
-    #         morph_info = line.strip().split('\t')
-    #         sent.append(morph_info)
-    #
-    # train_num = int(len(sents))
-    # train_sents = sents[:train_num]  # 一文、一文が配列になってる
+    # c = TextReader(path='teach_data.txt', train_test_ratio=1.0)
+    c = TextReader('https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt', train_test_ratio=1.0)
+    train_sents = c.train_sents()
 
     ok_total = 0
     ng_total = 0
@@ -66,8 +42,9 @@ def main(args):
             buf = buf + morph[0]
         logger.info(buf)
 
-        h = IREXTeachDataCreator("-Ochasen")
+        h = IREXTeachDataCreator(options="-Ochasen",padding=False)
 
+        #  自分で教師データを作る
         results = h.create_teach_data(buf)
         for result in results:
             logger.debug(result)
@@ -77,22 +54,24 @@ def main(args):
         ng_total = ng_total + ng
         h.save_teach_data(results, "./result")
 
+    logger.info("---------------------------------------")
     logger.info("Total: {0}".format(ok_total + ng_total))
     logger.info("   OK: {0}".format(ok_total))
     logger.info("   NG: {0}".format(ng_total))
     logger.info(" 割合: {0:3.1f} %".format(ok_total / (ok_total + ng_total) * 100.0))
 
-
-def get_training_texts():
-    text = requests.get('https://raw.githubusercontent.com/Hironsan/IOB2Corpus/master/hironsan.txt').text
-    return text.split("\n")
+    logger.info(" 文章総数: {0} 文".format(len(train_sents)))
 
 
-'''
-形態素に区切られた文章どうしの比較を行い、正解件数と誤り件数を返す。ただし
-渡された形態素自体が異なる場合は、誤りは0件を返すことにした。
-'''
+
 def assertEquals(expecteds, actuals):
+    """
+    形態素に区切られた文章どうしの比較を行い、正解件数と誤り件数を返す。ただし
+    渡された形態素自体が異なる場合は、誤りは0件を返すことにした。
+    :param expecteds:
+    :param actuals:
+    :return:
+    """
     ok = 0
     ng = 0
     for expected, actual in itertools.zip_longest(expecteds, actuals):
@@ -113,6 +92,7 @@ def assertEquals(expecteds, actuals):
             else:
                 logger.info(" 実際　: NULL")
 
+            # 表層は一致なのに、他が間違ってる場合はエラーカウント。そうでない場合は、カウント対象外。
             if (m1_surface == m2_surface):
                 ng = ng + 1
             else:
