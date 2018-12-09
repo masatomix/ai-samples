@@ -79,5 +79,5 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :path => "./script/provision_ja.sh",:privileged => false
   config.vm.provision :shell, :path => "./script/provision_python.sh",:privileged => false
   config.vm.provision :shell, :path => "./script/provision_mecab.sh",:privileged => false
-  config.vm.provision :shell, :path => "./script/provision_nlp.sh",:privileged => false
+  config.vm.provision :shell, :path => "./script/provision_python_nlp.sh",:privileged => false
 end

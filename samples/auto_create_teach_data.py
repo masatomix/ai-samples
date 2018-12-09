@@ -8,11 +8,10 @@ from nlp import IREXTeachDataCreator
 from nlp import TextReader
 import itertools
 
-from logging import getLogger, StreamHandler, Formatter, DEBUG
+from logging import getLogger
 import logging.config
 
-
-logger = getLogger(__name__)
+logger = getLogger()
 
 config = configparser.ConfigParser()
 config.read("./config/config.ini")
