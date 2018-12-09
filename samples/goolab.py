@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+"""
+GooラボのAPI実行サンプル
+Gooラボの形態素解析APIと固有表現抽出APIを呼び出す。
+"""
+
 import sys
 import requests
 import json
@@ -14,7 +20,6 @@ def main(args):
     sentence = "鈴木さんがきょうの9時30分に横浜に行きます。"
 
     print("sentence: [{0}]".format(sentence))
-
 
     payload_obj = {
         "app_id": config["payload"]["app_id"],
@@ -51,7 +56,6 @@ def create_morphs(payloadObj):
     return r.json()["word_list"]
 
 
-
 def create_entities(payloadObj):
     payload = json.dumps(payloadObj, ensure_ascii=False)
 
@@ -82,6 +86,7 @@ def get_proxy():
         verify = False
 
     return proxies, verify
+
 
 if __name__ == "__main__":
     main(sys.argv)
